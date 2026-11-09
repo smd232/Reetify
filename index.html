@@ -103,6 +103,13 @@ nav{display:none}
  nav button{flex:1;min-height:56px;font-size:12px;font-weight:700;color:var(--mute);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:14px}
  nav button span{font-size:22px}nav button.on{color:var(--main);background:var(--soft)}
 }
+.chat{text-align:left;max-width:440px;display:flex;flex-direction:column;height:min(620px,88dvh);padding:18px}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:14px 2px}
+.m{max-width:82%;padding:10px 14px;border-radius:18px;background:var(--soft);align-self:flex-start;font-size:15px;animation:in .25s ease}
+.m.me{background:var(--main);color:var(--on);align-self:flex-end}
+.m small{display:block;font-weight:700;font-size:12px;color:var(--mute);margin-bottom:2px}
+.m.typing{opacity:.6;font-style:italic}
+.chat .add{margin:8px 0 6px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -139,6 +146,7 @@ nav{display:none}
       <div><h3>Screen time today</h3><p class="sub" id="msg"></p><button class="chip" id="plus" style="margin-top:10px">+15 min scrolled</button></div></div>
      <div class="card"><h3>How are you feeling?</h3><p class="sub" id="moodMsg">Tap one. It stays private.</p><div class="moods" id="moods"><button data-v="1">😭</button><button data-v="2">😕</button><button data-v="3">😐</button><button data-v="4">🙂</button><button data-v="5">🥰</button></div></div>
     </div>
+    <h2>Wind down</h2><div class="grid" id="exGrid"></div>
     <h2>Jump to</h2>
     <button class="card link" data-go="study"><span class="ico">📚</span><span><h3 id="nextTask">Study</h3><span class="sub">Your next task</span></span></button>
     <button class="card link" data-go="safe"><span class="ico">🛡️</span><span><h3 id="safeCt">Safe inbox</h3><span class="sub">Tap to review safely</span></span></button>
@@ -162,18 +170,42 @@ nav{display:none}
     <form class="add" id="addT"><input id="tIn" placeholder="Add a task, e.g. Chemistry quiz" maxlength="50"><button class="btn" aria-label="Add task">＋</button></form>
     <div id="tasks"></div><button class="btn alt" id="bSync">Sync with Classroom (demo)</button></section>
    <section class="screen" id="support"><h1>Support</h1>
-    <div class="seg three" id="seg"><i></i><button data-s="counselor">Counselor</button><button data-s="contacts">Contacts</button><button data-s="tips">Tips</button></div>
-    <div id="s-counselor"><div class="card"><h3>Talk to a real counselor</h3><p class="sub" style="margin:6px 0 14px">Share only what you want. No real name shown.</p><button class="btn" data-toast="Request sent. A counselor will reply here">Chat now</button><div style="height:10px"></div><button class="btn alt" data-toast="Time slots show here in the full version">Book a private call</button></div></div>
-    <div id="s-contacts" hidden></div>
-    <div id="s-tips" hidden><div class="card"><details><summary>Posts are highlight reels</summary><p>People share their best angle, not their whole day.</p></details></div><div class="card"><details><summary>Mute what makes you feel less</summary><p>Muting is private. Try 7 days and notice your mood.</p></details></div><div class="card"><details><summary>Words for saying no</summary><p>“Not today, I’m good.” “Let’s do something else.” Short is fine.</p></details></div><div class="card"><details><summary>Message one real friend</summary><p>Something small. Real talk beats ten likes.</p></details></div></div>
-   </section>
+ <div class="seg three" id="seg"><i></i><button data-s="counselor">Counselor</button><button data-s="contacts">Contacts</button><button data-s="tips">Tips</button></div>
+ <div id="s-counselor">
+  <div class="card"><div class="row"><div class="av">👩‍⚕️</div><div><h3>Dr. Maria</h3><p class="sub">Counselor · online now (sample)</p></div></div>
+   <p class="sub" style="margin:12px 0 14px">Share only what you want. No real name shown.</p>
+   <button class="btn" id="chatDoc">Chat now</button><div style="height:10px"></div><button class="btn alt" id="bookCall">Book a private call</button></div>
+  <div class="card"><h3>Support group</h3><p class="sub" style="margin:6px 0 14px">Talk with other students, anonymously.</p><button class="btn alt" id="chatGrp">Join the group chat</button></div>
+ </div>
+ <div id="s-contacts" hidden></div>
+ <div id="s-tips" hidden>
+  <div class="card"><details><summary>Posts are highlight reels</summary><p>People share their best angle, not their whole day.</p></details></div>
+  <div class="card"><details><summary>Mute what makes you feel less</summary><p>Muting is private. Try 7 days and notice your mood.</p></details></div>
+  <div class="card"><details><summary>Words for saying no</summary><p>“Not today, I’m good.” “Let’s do something else.” Short is fine.</p></details></div>
+  <div class="card"><details><summary>Message one real friend</summary><p>Something small. Real talk beats ten likes.</p></details></div>
+ </div>
+</section>
   </main>
   <nav id="nav"></nav>
  </div>
 </section>
 
 <div class="ov" id="ovBreak"><div class="sheet"><h2 style="margin:0" id="bTitle">Breathe with me</h2><div class="bubble" id="bub"></div><p class="sub" id="bTxt">Get comfy, we will do 5 slow breaths.</p><div style="height:14px"></div><button class="btn" id="bStart">Start</button><button class="btn alt" id="bStop">Close</button></div></div>
-<div class="ov" id="lock"><h1>Time’s up for social apps</h1><p>You reached your daily goal. Calls, maps and Classroom still work.</p><button class="btn" id="askMore">Ask for 15 more minutes</button><button class="btn" style="background:rgba(255,255,255,.25);color:#fff" data-close="lock">Close preview</button></div>
+<div class="ov" id="lock"><h1>Time’s up for social apps</h1><p id="lockMsg">You reached your daily goal. Calls, maps and Classroom still work.</p><button class="btn" id="askMore">Ask for 15 more minutes</button><button class="btn" style="background:rgba(255,255,255,.25);color:#fff" data-close="lock">Close preview</button></div>
+<div class="ov" id="ovChat"><div class="sheet chat">
+ <div class="row sp"><div class="row"><div class="av" id="cAv"></div><div><h3 id="cName"></h3><p class="sub" id="cSub"></p></div></div><button class="ib" id="cClose" type="button" aria-label="Close chat">✕</button></div>
+ <div class="msgs" id="msgs"></div>
+ <form class="add" id="cForm"><input id="cIn" placeholder="Type a message" maxlength="300" autocomplete="off"><button class="btn" aria-label="Send">➤</button></form>
+ <p class="sub" style="font-size:12.5px;text-align:center">Sample chat for demo. In an emergency, call your local emergency number.</p>
+</div></div>
+
+<div class="ov" id="ovBook"><div class="sheet"><h2 style="margin:0">Book a private call</h2><p class="sub" style="margin:6px 0 4px">with Dr. Maria (sample times)</p>
+ <div class="chips" id="slots" style="justify-content:center"><button class="chip">Today, 5:00 pm</button><button class="chip">Tomorrow, 4:30 pm</button><button class="chip">Friday, 6:00 pm</button></div>
+ <div style="height:14px"></div><button class="btn alt" id="bkClose">Close</button></div></div>
+
+<div class="ov" id="ovEx"><div class="sheet"><h2 style="margin:0" id="xTitle"></h2><p class="sub" id="xDesc" style="margin-top:6px"></p>
+ <div class="bubble" id="xBub"></div><p class="fd" style="font-size:20px;margin:14px 0 4px" id="xTxt"></p><p class="sub" id="xProg"></p>
+ <div style="height:14px"></div><button class="btn" id="xGo">Start</button><button class="btn alt" id="xStop">Close</button></div></div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -218,7 +250,7 @@ const NAV=[["home","🏠","Home"],["focus","⏳","Focus"],["safe","🛡️","Saf
 $("#side").innerHTML=NAV.map(n=>`<button class="nb" data-go="${n[0]}"><span>${n[1]}</span>${n[2]}</button>`).join("");
 $("#nav").innerHTML=NAV.map(n=>`<button data-go="${n[0]}"><span>${n[1]}</span>${n[2]}</button>`).join("");
 function go(id){$$(".screen").forEach(s=>s.classList.toggle("on",s.id===id));$$("[data-go].nb,#nav button").forEach(b=>b.classList.toggle("on",b.dataset.go===id));$("main").scrollTop=0}
-function tab(s){$$("#seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===s));$("#seg i").style.transform=`translateX(${["counselor","contacts","tips"].indexOf(s)*100}%)`;["counselor","contacts","tips"].forEach(k=>$("#s-"+k).hidden=k!==s)}
+function tab(s){$$("#seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===s));$("#seg i").style.transform=`translateX(${["counselor","contacts","tips"].indexOf(s)*100}%)`;["counselor","contacts","tips"].forEach(k=>{const el=$("#s-"+k);if(el)el.hidden=k!==s})}
 $$("#seg button").forEach(b=>b.onclick=()=>tab(b.dataset.s));tab("counselor");
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)return go(g.dataset.go);
  const c=e.target.closest("[data-close]");if(c)return $("#"+c.dataset.close).classList.remove("on");
@@ -240,12 +272,16 @@ function render(){
  $("#nextTask").textContent=nx?nx[0]:"All tasks done 🎉";
  $("#s-contacts").innerHTML=D.contacts.map(c=>`<div class="card row"><div class="av">${c[0][0]}</div><div style="flex:1"><h3>${c[0]}</h3><p class="sub">${c[1]}</p></div><button class="btn sm" data-toast="Calling ${c[0]} (preview)">Call</button></div>`).join("");
  save()}
-$("#plus").onclick=()=>{D.used+=15;render();if(D.used>=D.limit&&D.t.lock)setTimeout(()=>$("#lock").classList.add("on"),500);else if(D.used>=D.limit)toast("You passed your goal. A break would help.")};
+$("#plus").onclick=()=>{D.used+=15;render();if(D.used>=D.limit&&D.t.lock)setTimeout(showLock,500);else if(D.used>=D.limit)toast("You passed your goal. A break would help.")};
 $("#moods").onclick=e=>{const b=e.target.closest("button");if(!b)return;const v=+b.dataset.v;D.mood[new Date().toDateString()]=v;$("#moodMsg").textContent=["","That sounds heavy. You are not alone, tap Support any time.","Rough one. Be gentle with yourself.","Totally okay. Small wins count.","Love that for you!","Yay, so glad! Keep that glow ✨"][v];if(v>=4){const r=b.getBoundingClientRect();burst(r.x+r.width/2,r.y,14)}render()};
 $("#lims").onclick=e=>{const c=e.target.closest(".chip");if(c){D.limit=+c.dataset.m;render();toast("Daily goal: "+c.textContent)}};
 document.addEventListener("click",e=>{const t=e.target.closest(".tog");if(t){D.t[t.dataset.k]=D.t[t.dataset.k]?0:1;render();toast(D.t[t.dataset.k]?"Turned on":"Turned off")}});
-$("#pLock").onclick=()=>$("#lock").classList.add("on");
-$("#askMore").onclick=()=>{$("#lock").classList.remove("on");D.limit+=15;render();toast("Request sent to "+D.contacts[0][0])};
+$("#pLock").onclick=showLock;
+function showLock(){const today=new Date().toDateString();if(D.extDay!==today){D.extDay=today;D.ext=0}
+ $("#askMore").hidden=D.ext>=1;
+ $("#lockMsg").textContent=D.ext>=1?"You've used your 15 extra minutes today. Time to rest. Your goal resets tomorrow 🌸":"You reached your daily goal. Calls, maps and Classroom still work.";
+ $("#lock").classList.add("on")}
+$("#askMore").onclick=()=>{D.ext=1;D.extDay=new Date().toDateString();D.limit+=15;$("#lock").classList.remove("on");render();toast("15 extra minutes added. Use them mindfully 🌸")};
 $("#items").onclick=e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;if(a==="t")return toast("Shared with "+D.contacts[0][0]+". They see only this alert");D.safe=D.safe.filter(i=>i!=b.dataset.i);toast(a==="r"?"Reported. Thank you for speaking up":"Sender blocked");render()};
 $("#bring").onclick=()=>{D.safe=[0,1,2];render()};
 $("#tasks").onclick=e=>{const x=e.target.closest("[data-x]");if(x){D.tasks.splice(+x.dataset.x,1);return render()}const c=e.target.closest("[data-t]");if(!c)return;const t=D.tasks[+c.dataset.t];t[2]=t[2]?0:1;if(t[2]){const r=c.getBoundingClientRect();burst(r.x+30,r.y+20,16)}render()};
@@ -256,6 +292,50 @@ let bt=[];const stopB=()=>{bt.forEach(clearTimeout);bt=[];$("#bub").style.transf
 $("#pBreak").onclick=()=>{$("#bTxt").textContent="Get comfy, we will do 5 slow breaths.";$("#ovBreak").classList.add("on")};
 $("#bStop").onclick=stopB;
 $("#bStart").onclick=()=>{$("#bStart").hidden=true;let n=0;const cyc=()=>{if(n++===5){burst(...mid(),30);D.breaks++;save();$("#bTxt").textContent="Beautiful. Break complete 💗";$("#bStart").hidden=false;$("#bStart").textContent="Again";return}$("#bTxt").textContent="Breathe in… ("+n+" of 5)";$("#bub").style.transform="scale(1.6)";bt.push(setTimeout(()=>{$("#bTxt").textContent="Breathe out…";$("#bub").style.transform="scale(1)"},4000),setTimeout(cyc,8000))};cyc()};
+/* counselor + support group chat (sample replies) */
+const DOC=["I hear you, thank you for sharing that. 💗","That sounds really hard. What part feels heaviest right now?","You're not alone in this. Would a short breathing exercise help, or would you rather keep talking?","What's one small thing that could make tonight 5% easier?","That makes sense. Be gentle with yourself, you're doing your best."];
+const GRP=[["Aisha","Same here, exams have been rough this week 😅"],["Noor","Sending hugs. A walk without my phone helped me 🌿"],["Zain","You're not alone, we're all here 💗"],["Aisha","Thanks for sharing, that takes courage!"]];
+let chat=null,ci=0,chatId=0;
+function addMsg(t,mine,who){const d=document.createElement("div");d.className="m"+(mine?" me":"");if(who&&!mine){const s=document.createElement("small");s.textContent=who;d.append(s)}d.append(document.createTextNode(t));$("#msgs").append(d);$("#msgs").scrollTop=1e9}
+function openChat(k){chat=k;ci=0;chatId++;const id=chatId,g=k==="grp";$("#msgs").innerHTML="";
+ $("#cAv").textContent=g?"👥":"👩‍⚕️";$("#cName").textContent=g?"Support group":"Dr. Maria";$("#cSub").textContent=g?"Anonymous · sample members":"Counselor · sample chat";
+ $("#ovChat").classList.add("on");
+ if(g){addMsg("Welcome! Everyone here is anonymous and kind. Share as much or as little as you like.",0,"Group guide");setTimeout(()=>{if(id===chatId)addMsg("Hi 🌸 so glad you joined!",0,"Noor")},900)}
+ else addMsg("Hi "+(me?me.name:"there")+", I'm Dr. Maria. This is a safe, private space. How are you feeling today?",0,"Dr. Maria");
+ setTimeout(()=>$("#cIn").focus(),300)}
+$("#chatDoc").onclick=()=>openChat("doc");$("#chatGrp").onclick=()=>openChat("grp");
+$("#cClose").onclick=()=>{chatId++;$("#ovChat").classList.remove("on")};
+$("#cForm").onsubmit=e=>{e.preventDefault();const v=$("#cIn").value.trim();if(!v)return;addMsg(v,1);$("#cIn").value="";
+ const id=chatId,g=chat==="grp",t=document.createElement("div");t.className="m typing";t.textContent="typing…";$("#msgs").append(t);$("#msgs").scrollTop=1e9;
+ setTimeout(()=>{t.remove();if(id!==chatId)return;if(g){const r=GRP[ci++%GRP.length];addMsg(r[1],0,r[0])}else addMsg(DOC[ci++%DOC.length],0,"Dr. Maria")},1200)};
+$("#bookCall").onclick=()=>$("#ovBook").classList.add("on");
+$("#bkClose").onclick=()=>$("#ovBook").classList.remove("on");
+$("#slots").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;$("#ovBook").classList.remove("on");toast("Booked: "+c.textContent+" with Dr. Maria (sample)")};
+
+/* guided wind-down exercises: [text, seconds, bubble scale] */
+const rep=(n,a)=>Array.from({length:n},()=>a).flat();
+const EX={
+ sigh:{e:"🌬️",t:"Cyclic sighing",b:1,d:"Two inhales through the nose, one long exhale. A 2023 Stanford study found it lifted mood and reduced anxiety more than mindfulness meditation.",
+  s:rep(5,[["Breathe in through your nose…",3,1.4],["One more small sip of air…",1.5,1.65],["Long, slow breath out through your mouth…",6,1]])},
+ slow:{e:"🫧",t:"Slow breathing",b:1,d:"About 6 breaths a minute is linked to a calmer heart rhythm (higher HRV) and lower stress.",
+  s:rep(6,[["Breathe in…",5,1.6],["Breathe out…",5,1]])},
+ pmr:{e:"💪",t:"Muscle relaxation",b:0,d:"Progressive muscle relaxation (Jacobson) is well studied for easing tension, anxiety and sleep trouble.",
+  s:["your hands","your arms and shoulders","your face","your stomach","your legs and feet"].flatMap(g=>[["Tense "+g+" firmly for 5 seconds",5],["Let go. Notice the warmth and heaviness…",10]])},
+ ground:{e:"🌿",t:"5-4-3-2-1 grounding",b:0,d:"A grounding technique widely used in therapy. It pulls your attention out of worry and into the present.",
+  s:[["Name 5 things you can see",15],["Notice 4 things you can touch",15],["Listen for 3 sounds",15],["Find 2 things you can smell",12],["Notice 1 thing you can taste",10],["One slow breath. You are here, you are safe.",8]]},
+ good:{e:"🌷",t:"3 good things",b:0,d:"Writing or thinking of three good things each day improved wellbeing in a well-known study (Seligman et al., 2005).",
+  s:rep(3,[["Think of one good thing from today, big or small",15],["Why did it happen? Let yourself enjoy it",12]])}
+};
+$("#exGrid").innerHTML=Object.entries(EX).map(([k,x])=>`<button class="card link" data-ex="${k}"><span class="ico">${x.e}</span><span><h3>${x.t}</h3><span class="sub">~${Math.max(1,Math.round(x.s.reduce((a,s)=>a+s[1],0)/60))} min</span></span></button>`).join("");
+let xt=[];
+function xClose(){xt.forEach(clearTimeout);xt=[];$("#ovEx").classList.remove("on")}
+function xOpen(k){const x=EX[k];xt.forEach(clearTimeout);xt=[];$("#xTitle").textContent=x.e+" "+x.t;$("#xDesc").textContent=x.d;$("#xTxt").textContent="Find a comfortable position.";$("#xProg").textContent="";
+ $("#xBub").hidden=!x.b;$("#xBub").style.transitionDuration="0s";$("#xBub").style.transform="none";$("#xGo").hidden=false;$("#xGo").textContent="Start";$("#xGo").dataset.k=k;$("#ovEx").classList.add("on")}
+$("#xGo").onclick=()=>{const x=EX[$("#xGo").dataset.k];$("#xGo").hidden=true;let i=0;
+ const run=()=>{if(i>=x.s.length){burst(...mid(),30);D.breaks=(D.breaks||0)+1;save();$("#xTxt").textContent="Well done. Notice how you feel 💗";$("#xProg").textContent="";$("#xBub").style.transform="none";$("#xGo").hidden=false;$("#xGo").textContent="Again";return}
+  const[t,s,sc]=x.s[i];$("#xTxt").textContent=t;$("#xProg").textContent="Step "+(i+1)+" of "+x.s.length;$("#xBub").style.transitionDuration=s+"s";$("#xBub").style.transform="scale("+(sc||1)+")";i++;xt.push(setTimeout(run,s*1000))};run()};
+$("#xStop").onclick=xClose;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ex]");if(b)xOpen(b.dataset.ex)});
 /* start */
 const sess=ls.get("sk:session",null),U0=ls.get("sk:users",{});
 if(sess&&U0[sess])enter(U0[sess],false);
