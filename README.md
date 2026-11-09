@@ -1,4 +1,4 @@
-# Sukoon
+# Reetify
 
 Static web app: no build step, no dependencies.
 
