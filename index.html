@@ -110,6 +110,9 @@ nav{display:none}
 .m small{display:block;font-weight:700;font-size:12px;color:var(--mute);margin-bottom:2px}
 .m.typing{opacity:.6;font-style:italic}
 .chat .add{margin:8px 0 6px}
+.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;background:var(--main);transition:width .5s}
+.link:disabled{opacity:.55;cursor:default}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -154,6 +157,9 @@ nav{display:none}
     <button class="btn" id="pBreak">Take a breathing break 🫧</button>
    </section>
    <section class="screen" id="focus"><h1>Focus</h1><p class="sub" style="margin-bottom:16px">Gentle first. Lock only if you want it.</p>
+<h2 style="margin-top:0">Linked apps</h2><div id="apps"></div>
+<button class="btn alt" id="linkBtn">＋ Link an app</button>
+<p class="sub" style="margin:10px 0 20px;font-size:13px">Time counts when you tap Open &amp; track, or add it yourself. A website can't see inside other apps.</p>
     <div class="card"><div class="row sp"><div><h3>Scroll reminders</h3><p class="sub">A soft nudge when you keep scrolling</p></div><button class="tog" data-k="scroll" aria-label="Scroll reminders"></button></div></div>
     <div class="card"><div class="row sp"><div><h3>Auto app lock</h3><p class="sub">Social apps lock when time is up</p></div><button class="tog" data-k="lock" aria-label="Auto app lock"></button></div>
      <div class="chips" id="lims"><button class="chip" data-m="60">1 h</button><button class="chip" data-m="120">2 h</button><button class="chip" data-m="180">3 h</button><button class="chip" data-m="240">4 h</button></div>
@@ -206,7 +212,8 @@ nav{display:none}
 <div class="ov" id="ovEx"><div class="sheet"><h2 style="margin:0" id="xTitle"></h2><p class="sub" id="xDesc" style="margin-top:6px"></p>
  <div class="bubble" id="xBub"></div><p class="fd" style="font-size:20px;margin:14px 0 4px" id="xTxt"></p><p class="sub" id="xProg"></p>
  <div style="height:14px"></div><button class="btn" id="xGo">Start</button><button class="btn alt" id="xStop">Close</button></div></div>
-<div class="toast" id="toast" role="status"></div>
+<div class="ov" id="ovLink"><div class="sheet"><h2 style="margin:0" id="lkT">Which app do you want to link?</h2><p class="sub" id="lkS" style="margin:6px 0 14px"></p><div id="lkList"></div><button class="btn alt" id="lkClose">Close</button></div></div>
+ <div class="toast" id="toast" role="status"></div>
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -336,6 +343,44 @@ $("#xGo").onclick=()=>{const x=EX[$("#xGo").dataset.k];$("#xGo").hidden=true;let
   const[t,s,sc]=x.s[i];$("#xTxt").textContent=t;$("#xProg").textContent="Step "+(i+1)+" of "+x.s.length;$("#xBub").style.transitionDuration=s+"s";$("#xBub").style.transform="scale("+(sc||1)+")";i++;xt.push(setTimeout(run,s*1000))};run()};
 $("#xStop").onclick=xClose;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ex]");if(b)xOpen(b.dataset.ex)});
+/* linked social apps: tracked per app, starts at 0 */
+const APPS={ig:{n:"Instagram",e:"📸",u:"https://www.instagram.com"},fb:{n:"Facebook",e:"👍",u:"https://www.facebook.com"},sc:{n:"Snapchat",e:"👻",u:"https://www.snapchat.com"}};
+const elapsed=()=>D.sess?(Date.now()-D.sess.start)/1000:0;
+const appSec=k=>(D.apps[k]?D.apps[k].s:0)+(D.sess&&D.sess.k===k?elapsed():0);
+const usedMin=()=>Object.keys(D.apps).reduce((a,k)=>a+appSec(k),0)/60;
+const mmss=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+const locked=()=>D.t.lock&&usedMin()>=D.limit;
+function checkLock(){if(locked())showLock()}
+function stopSess(){if(!D.sess)return;const k=D.sess.k;if(D.apps[k])D.apps[k].s+=elapsed();D.sess=null;render();checkLock()}
+function startSess(k){if(locked())return showLock();if(D.sess)stopSess();D.sess={k,start:Date.now()};window.open(APPS[k].u,"_blank","noopener");render();toast("Tracking "+APPS[k].n+". Tap Stop when you're done")}
+function renderApps(){const box=$("#apps");if(!box)return;const ks=Object.keys(D.apps);
+ box.innerHTML=ks.length?ks.map(k=>{const a=APPS[k],s=appSec(k),run=D.sess&&D.sess.k===k,lk=locked()&&!run,pct=Math.min(100,s/60/D.limit*100);
+  return `<div class="card"><div class="row"><span class="ico">${a.e}</span><div style="flex:1"><h3>${a.n}</h3><p class="sub">Today: <b ${run?'id="liveT"':''}>${run?mmss(s):fmt(Math.floor(s/60))}</b>${run?" · tracking now":""}</p></div><button class="chip" data-un="${k}" aria-label="Unlink ${a.n}" style="min-height:36px;padding:4px 12px">✕</button></div><div class="bar"><i style="width:${pct}%"></i></div><div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${run?`<button class="btn sm" data-stop="1">⏹ Stop</button>`:`<button class="btn sm" data-open="${k}">${lk?"🔒 Locked":"▶ Open &amp; track"}</button>`}<button class="btn alt sm" data-add="${k}">+5 min</button></div></div>`}).join(""):`<div class="card" style="text-align:center"><div style="font-size:44px">🔗</div><h3>No apps linked yet</h3><p class="sub">Link one to start tracking from 0.</p></div>`;
+ $("#plus").textContent=ks.length?"Manage apps":"Link an app"}
+const _render=render;
+render=function(){if(!D)return;D.apps=D.apps||{};D.sess=D.sess||null;const day=new Date().toDateString();
+ if(D.day!==day){D.day=day;Object.values(D.apps).forEach(a=>a.s=0);if(D.sess)D.sess.start=Date.now()}
+ D.used=Math.floor(usedMin());_render();renderApps()};
+function openLink(){$("#lkT").textContent="Which app do you want to link?";$("#lkS").textContent="Pick one. Each one starts at 0h 00m.";
+ $("#lkList").innerHTML=Object.entries(APPS).map(([k,a])=>`<button class="card link" data-pick="${k}" ${D.apps[k]?"disabled":""}><span class="ico">${a.e}</span><span><h3>${a.n}</h3><span class="sub">${D.apps[k]?"Linked ✓":"Tap to link"}</span></span></button>`).join("");
+ $("#ovLink").classList.add("on")}
+$("#plus").onclick=()=>Object.keys(D.apps).length?go("focus"):openLink();
+$("#linkBtn").onclick=openLink;
+$("#lkClose").onclick=()=>$("#ovLink").classList.remove("on");
+document.addEventListener("click",e=>{
+ const p=e.target.closest("[data-pick]");
+ if(p&&!p.disabled){const k=p.dataset.pick,a=APPS[k];$("#lkT").textContent="Link "+a.n+"?";$("#lkS").textContent="Reetify will count your time from 0h 00m. Sample connection, no password needed.";
+  $("#lkList").innerHTML=`<button class="btn" id="lkYes">Link ${a.n}</button><button class="btn alt" id="lkBack">Back</button>`;
+  $("#lkBack").onclick=openLink;
+  $("#lkYes").onclick=()=>{$("#lkYes").textContent="Connecting…";setTimeout(()=>{D.apps[k]={s:0};$("#ovLink").classList.remove("on");render();chime();burst(...mid(),24);toast(a.n+" linked. Starting at 0h 00m ✨");go("focus")},900)};
+  return}
+ const o=e.target.closest("[data-open]");if(o)return startSess(o.dataset.open);
+ if(e.target.closest("[data-stop]"))return stopSess();
+ const a2=e.target.closest("[data-add]");if(a2){D.apps[a2.dataset.add].s+=300;render();return checkLock()}
+ const u=e.target.closest("[data-un]");if(u){const k=u.dataset.un;if(D.sess&&D.sess.k===k)D.sess=null;delete D.apps[k];render();toast(APPS[k].n+" unlinked")}
+});
+let tk=0;setInterval(()=>{if(!D||!D.sess)return;tk++;const el=$("#liveT");if(el)el.textContent=mmss(appSec(D.sess.k));if(tk%15===0)render();if(locked())stopSess()},1000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&D)render()});
 /* start */
 const sess=ls.get("sk:session",null),U0=ls.get("sk:users",{});
 if(sess&&U0[sess])enter(U0[sess],false);
